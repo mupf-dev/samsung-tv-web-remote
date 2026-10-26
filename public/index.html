@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0f14">
+  <title>TV Remote</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f8cff' stroke-width='2' stroke-linecap='round'%3E%3Crect x='2' y='4' width='20' height='13' rx='2'/%3E%3Cpath d='M8 21h8M12 17v4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+    <symbol id="i-exit" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-source" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M12 9v6M9 12l3 3 3-3"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
+    <symbol id="i-guide" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></symbol>
+    <symbol id="i-tools" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-vol" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 6 6M22 9l-6 6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 4h3v16H7zM14 4h3v16h-3z"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1.5"/></symbol>
+    <symbol id="i-rew" viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6zM21 18V6l-8.5 6z"/></symbol>
+    <symbol id="i-ff" viewBox="0 0 24 24"><path d="M13 6v12l8.5-6zM3 6v12l8.5-6z"/></symbol>
+    <symbol id="i-rec" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.8-4M4 4v4h4M4 13a8 8 0 0 0 14.8 4M20 20v-4h-4"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark"><svg><use href="#i-source"/></svg></div>
+    <div>
+      <div class="brand-name" id="tv-name">Samsung TV</div>
+      <div class="brand-sub" id="tv-model">verbinde …</div>
+    </div>
+  </div>
+  <div class="status">
+    <span class="chip" id="chip-power"><i></i><span>–</span></span>
+    <span class="chip" id="chip-remote"><i></i><span>–</span></span>
+  </div>
+  <button class="power-btn" id="power-btn" title="Ein/Aus (P)"><svg><use href="#i-power"/></svg></button>
+</header>
+
+<div class="banner" id="banner" hidden></div>
+
+<main class="layout">
+  <!-- Fernbedienung -->
+  <section class="card remote" aria-label="Fernbedienung">
+    <div class="row4">
+      <button class="kbtn" data-key="KEY_SOURCE"><svg><use href="#i-source"/></svg><span>Quelle</span></button>
+      <button class="kbtn" data-key="KEY_HOME"><svg><use href="#i-home"/></svg><span>Home</span></button>
+      <button class="kbtn" data-key="KEY_MENU"><svg><use href="#i-menu"/></svg><span>Menü</span></button>
+      <button class="kbtn" data-key="KEY_TOOLS"><svg><use href="#i-tools"/></svg><span>Optionen</span></button>
+    </div>
+
+    <div class="dpad">
+      <button class="d up" data-key="KEY_UP" data-repeat aria-label="Hoch"><svg><use href="#i-up"/></svg></button>
+      <button class="d left" data-key="KEY_LEFT" data-repeat aria-label="Links"><svg><use href="#i-left"/></svg></button>
+      <button class="d ok" data-key="KEY_ENTER">OK</button>
+      <button class="d right" data-key="KEY_RIGHT" data-repeat aria-label="Rechts"><svg><use href="#i-right"/></svg></button>
+      <button class="d down" data-key="KEY_DOWN" data-repeat aria-label="Runter"><svg><use href="#i-down"/></svg></button>
+    </div>
+
+    <div class="row4">
+      <button class="kbtn" data-key="KEY_RETURN"><svg><use href="#i-back"/></svg><span>Zurück</span></button>
+      <button class="kbtn" data-key="KEY_EXIT"><svg><use href="#i-exit"/></svg><span>Exit</span></button>
+      <button class="kbtn" data-key="KEY_INFO"><svg><use href="#i-info"/></svg><span>Info</span></button>
+      <button class="kbtn" data-key="KEY_GUIDE"><svg><use href="#i-guide"/></svg><span>Guide</span></button>
+    </div>
+
+    <div class="rockers">
+      <div class="rocker">
+        <button data-key="KEY_VOLUP" data-repeat aria-label="Lauter"><svg><use href="#i-plus"/></svg></button>
+        <span class="rocker-label">VOL</span>
+        <button data-key="KEY_VOLDOWN" data-repeat aria-label="Leiser"><svg><use href="#i-minus"/></svg></button>
+      </div>
+      <div class="vol-panel">
+        <div class="vol-head">
+          <span>Lautstärke</span>
+          <strong id="vol-value">–</strong>
+        </div>
+        <input type="range" id="vol-slider" min="0" max="100" value="0" aria-label="Lautstärke">
+        <button class="pill" id="mute-btn"><svg><use href="#i-vol"/></svg><span>Ton an</span></button>
+      </div>
+      <div class="rocker">
+        <button data-key="KEY_CHUP" data-repeat aria-label="Sender hoch"><svg><use href="#i-up"/></svg></button>
+        <span class="rocker-label">CH</span>
+        <button data-key="KEY_CHDOWN" data-repeat aria-label="Sender runter"><svg><use href="#i-down"/></svg></button>
+      </div>
+    </div>
+
+    <div class="colors">
+      <button data-key="KEY_RED" class="c red" aria-label="Rot"></button>
+      <button data-key="KEY_GREEN" class="c green" aria-label="Grün"></button>
+      <button data-key="KEY_YELLOW" class="c yellow" aria-label="Gelb"></button>
+      <button data-key="KEY_CYAN" class="c blue" aria-label="Blau"></button>
+    </div>
+
+    <div class="media">
+      <button data-key="KEY_REWIND" data-repeat aria-label="Zurückspulen"><svg><use href="#i-rew"/></svg></button>
+      <button data-key="KEY_PLAY" aria-label="Wiedergabe"><svg><use href="#i-play"/></svg></button>
+      <button data-key="KEY_PAUSE" aria-label="Pause"><svg><use href="#i-pause"/></svg></button>
+      <button data-key="KEY_STOP" aria-label="Stopp"><svg><use href="#i-stop"/></svg></button>
+      <button data-key="KEY_FF" data-repeat aria-label="Vorspulen"><svg><use href="#i-ff"/></svg></button>
+      <button data-key="KEY_REC" class="rec" aria-label="Aufnahme"><svg><use href="#i-rec"/></svg></button>
+    </div>
+  </section>
+
+  <!-- Funktionsbereich -->
+  <section class="card panel">
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="apps" class="active">Apps</button>
+      <button role="tab" data-tab="channels">Sender</button>
+      <button role="tab" data-tab="sources">Quellen</button>
+      <button role="tab" data-tab="input">Eingabe</button>
+      <button role="tab" data-tab="media">Medien</button>
+      <button role="tab" data-tab="picture">Bild &amp; Ton</button>
+      <button role="tab" data-tab="keys">Alle Tasten</button>
+      <button role="tab" data-tab="info">Info</button>
+    </nav>
+
+    <!-- Apps -->
+    <div class="pane active" data-pane="apps">
+      <div class="toolbar">
+        <label class="search"><svg><use href="#i-search"/></svg><input id="app-search" type="search" placeholder="App suchen …"></label>
+        <button class="ghost" id="apps-refresh" title="Neu laden"><svg><use href="#i-refresh"/></svg></button>
+      </div>
+      <div class="app-grid" id="app-grid"><p class="muted">Apps werden geladen …</p></div>
+    </div>
+
+    <!-- Sender -->
+    <div class="pane" data-pane="channels">
+      <div class="split">
+        <div>
+          <h3>Zifferntasten</h3>
+          <div class="numpad">
+            <button data-key="KEY_1">1</button><button data-key="KEY_2">2</button><button data-key="KEY_3">3</button>
+            <button data-key="KEY_4">4</button><button data-key="KEY_5">5</button><button data-key="KEY_6">6</button>
+            <button data-key="KEY_7">7</button><button data-key="KEY_8">8</button><button data-key="KEY_9">9</button>
+            <button data-key="KEY_PRECH" title="Vorheriger Sender"><svg><use href="#i-prev"/></svg></button>
+            <button data-key="KEY_0">0</button>
+            <button data-key="KEY_ENTER" class="accent">OK</button>
+          </div>
+        </div>
+        <div>
+          <h3>Sender</h3>
+          <div class="btn-list">
+            <button data-key="KEY_CH_LIST"><svg><use href="#i-list"/></svg>Senderliste</button>
+            <button data-key="KEY_GUIDE"><svg><use href="#i-guide"/></svg>Programmführer</button>
+            <button data-key="KEY_TTX_MIX"><svg><use href="#i-menu"/></svg>Videotext</button>
+            <button data-key="KEY_PRECH"><svg><use href="#i-prev"/></svg>Vorheriger Sender</button>
+            <button data-key="KEY_TV"><svg><use href="#i-source"/></svg>Live-TV</button>
+          </div>
+          <form class="inline-form" id="channel-form">
+            <input id="channel-input" inputmode="numeric" pattern="[0-9]*" placeholder="Sendernummer, z. B. 12">
+            <button class="primary">Umschalten</button>
+          </form>
+          <p class="muted small" id="st-channel"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quellen -->
+    <div class="pane" data-pane="sources">
+      <h3>Eingänge</h3>
+      <div class="tile-row">
+        <button class="tile" data-key="KEY_TV"><strong>TV</strong><span>Live-TV</span></button>
+        <button class="tile" data-key="KEY_HDMI1"><strong>HDMI 1</strong><span>Eingang 1</span></button>
+        <button class="tile" data-key="KEY_HDMI2"><strong>HDMI 2</strong><span>Eingang 2</span></button>
+        <button class="tile" data-key="KEY_HDMI3"><strong>HDMI 3</strong><span>Eingang 3 · eARC</span></button>
+        <button class="tile" data-key="KEY_HDMI4"><strong>HDMI 4</strong><span>Eingang 4</span></button>
+        <button class="tile" data-key="KEY_SOURCE"><strong>Quellen</strong><span>Menü am TV</span></button>
+      </div>
+      <div id="st-inputs-wrap" hidden>
+        <h3>Quellen laut SmartThings</h3>
+        <div class="tile-row" id="st-inputs"></div>
+      </div>
+    </div>
+
+    <!-- Eingabe -->
+    <div class="pane" data-pane="input">
+      <h3>Texteingabe</h3>
+      <p class="muted small" id="ime-hint">Öffne am TV ein Suchfeld oder eine Tastatur – dann hier tippen und senden.</p>
+      <form class="inline-form" id="text-form">
+        <input id="text-input" placeholder="Text an den Fernseher senden …" autocomplete="off">
+        <button type="button" class="ghost" id="text-send">Einfügen</button>
+        <button class="primary">Senden &amp; Bestätigen</button>
+      </form>
+
+      <h3>Touchpad</h3>
+      <p class="muted small">Ziehen bewegt den Zeiger (z. B. im Browser), Tippen klickt. Funktioniert nur, wo der TV einen Zeiger anbietet.</p>
+      <div class="touchpad" id="touchpad"><span>Touchpad</span></div>
+
+      <h3>Webseite öffnen</h3>
+      <form class="inline-form" id="browser-form">
+        <input id="browser-url" type="url" placeholder="https://…" required>
+        <button class="primary">Im TV-Browser öffnen</button>
+      </form>
+    </div>
+
+    <!-- Medien -->
+    <div class="pane" data-pane="media">
+      <h3>Medien abspielen (DLNA)</h3>
+      <p class="muted small">Video-, Audio- oder Bild-URL, die der Fernseher direkt im Netz erreichen kann (z. B. MP4 auf einem NAS).</p>
+      <form class="stack-form" id="cast-form">
+        <input id="cast-url" type="url" placeholder="http://…/film.mp4" required>
+        <input id="cast-title" placeholder="Titel (optional)">
+        <button class="primary">Auf dem TV abspielen</button>
+      </form>
+      <div class="transport">
+        <button class="pill" data-cast="play"><svg><use href="#i-play"/></svg>Play</button>
+        <button class="pill" data-cast="pause"><svg><use href="#i-pause"/></svg>Pause</button>
+        <button class="pill" data-cast="stop"><svg><use href="#i-stop"/></svg>Stopp</button>
+        <span class="muted small" id="cast-info"></span>
+      </div>
+    </div>
+
+    <!-- Bild & Ton -->
+    <div class="pane" data-pane="picture">
+      <div id="st-off" class="notice">
+        <strong>Bild- und Tonmodus direkt wählen</strong>
+        <p>Diese Einstellungen bietet der Fernseher lokal nicht als Schnittstelle an. Mit einem SmartThings-Token in <code>config.json</code> erscheinen hier Bildmodus, Tonmodus, Quellen und Sender zum direkten Auswählen.</p>
+      </div>
+      <div id="st-on" hidden>
+        <h3>Bildmodus</h3>
+        <div class="segments" id="picture-modes"></div>
+        <h3>Tonmodus</h3>
+        <div class="segments" id="sound-modes"></div>
+      </div>
+      <h3>Schnellzugriff</h3>
+      <div class="tile-row">
+        <button class="tile" data-key="KEY_PICTURE_SIZE"><strong>Bildformat</strong><span>16:9, Zoom …</span></button>
+        <button class="tile" data-key="KEY_CAPTION"><strong>Untertitel</strong><span>ein / aus</span></button>
+        <button class="tile" data-key="KEY_AD"><strong>Bedienungshilfen</strong><span>Audiodeskription</span></button>
+        <button class="tile" data-key="KEY_MULTI_VIEW"><strong>Multi View</strong><span>Bildschirm teilen</span></button>
+        <button class="tile" data-key="KEY_AMBIENT"><strong>Ambient</strong><span>Ambient-Modus</span></button>
+        <button class="tile" data-key="KEY_SLEEP"><strong>Sleep-Timer</strong><span>Ausschaltzeit</span></button>
+      </div>
+      <p class="muted small">Alle weiteren Einstellungen (Helligkeit, Kontrast, Equalizer …) erreichst du über <button class="link" data-key="KEY_MENU">Menü</button> und das Steuerkreuz.</p>
+    </div>
+
+    <!-- Alle Tasten -->
+    <div class="pane" data-pane="keys">
+      <div id="key-groups"></div>
+      <h3>Eigener Tastencode</h3>
+      <form class="inline-form" id="custom-key-form">
+        <input id="custom-key" placeholder="KEY_…" autocapitalize="characters" required>
+        <select id="custom-cmd" aria-label="Aktion">
+          <option value="Click">Drücken</option>
+          <option value="Press">Halten (Start)</option>
+          <option value="Release">Halten (Ende)</option>
+        </select>
+        <button class="primary">Senden</button>
+      </form>
+    </div>
+
+    <!-- Info -->
+    <div class="pane" data-pane="info">
+      <h3>Gerät</h3>
+      <dl class="info-list" id="info-list"></dl>
+      <h3>Verbindung</h3>
+      <div class="btn-row">
+        <button class="ghost" id="reconnect">Neu verbinden</button>
+        <button class="ghost danger" id="forget">Kopplung zurücksetzen</button>
+      </div>
+      <h3>Tastaturkürzel</h3>
+      <dl class="info-list shortcuts">
+        <dt>Pfeile / Enter</dt><dd>Navigation / OK</dd>
+        <dt>Backspace</dt><dd>Zurück</dd>
+        <dt>Esc</dt><dd>Exit</dd>
+        <dt>H</dt><dd>Home</dd>
+        <dt>+ / −</dt><dd>Lautstärke</dd>
+        <dt>M</dt><dd>Stumm</dd>
+        <dt>Bild ↑ / Bild ↓</dt><dd>Sender</dd>
+        <dt>0–9</dt><dd>Ziffern</dd>
+        <dt>Leertaste</dt><dd>Play/Pause</dd>
+        <dt>P</dt><dd>Ein/Aus</dd>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js" type="module"></script>
+</body>
+</html>

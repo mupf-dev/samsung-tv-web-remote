@@ -1,0 +1,13 @@
+{
+  "port": 8097,
+  "tv": {
+    "host": "192.168.1.50",
+    "mac": "AA:BB:CC:DD:EE:FF",
+    "name": "TV Web Remote"
+  },
+  "wolBroadcast": "255.255.255.255",
+  "smartthings": {
+    "token": "",
+    "deviceId": ""
+  }
+}
