@@ -4,6 +4,7 @@
   "description": "Web-Interface für Samsung Tizen TVs (QN900A)",
   "type": "module",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "start": "node server/index.js"
   },
