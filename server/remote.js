@@ -2,6 +2,7 @@
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import WebSocket from 'ws';
+import { AppError } from './errors.js';
 
 const b64 = (s) => Buffer.from(s, 'utf8').toString('base64');
 
@@ -59,7 +60,7 @@ export class TvRemote extends EventEmitter {
         if (err) { ws.terminate(); reject(err); } else resolve();
       };
       // Pairing-Dialog am TV wartet ~30 s auf Bestätigung
-      const timer = setTimeout(() => finish(new Error('Zeitüberschreitung beim Verbinden (Freigabe am TV bestätigt?)')), 40000);
+      const timer = setTimeout(() => finish(new AppError('pairing_timeout', 'Connection timed out (did you allow it on the TV?)')), 40000);
 
       ws.on('message', (raw) => {
         let msg;
@@ -71,10 +72,10 @@ export class TvRemote extends EventEmitter {
           finish();
         } else if (event === 'ms.channel.unauthorized') {
           this.#setState('denied');
-          finish(new Error('Verbindung am TV abgelehnt'));
+          finish(new AppError('pairing_denied', 'Connection denied on the TV'));
         } else if (event === 'ms.channel.timeOut') {
           this.#setState('disconnected');
-          finish(new Error('Freigabe am TV nicht rechtzeitig bestätigt'));
+          finish(new AppError('pairing_not_confirmed', 'Permission was not confirmed on the TV in time'));
         } else if (event === 'ms.remote.imeStart') {
           this.ime = true; this.emit('ime', true);
         } else if (event === 'ms.remote.imeEnd') {
@@ -89,9 +90,9 @@ export class TvRemote extends EventEmitter {
           this.ws = null;
           if (this.state !== 'denied') this.#setState('disconnected');
         }
-        for (const list of this.pending.values()) for (const p of list) { clearTimeout(p.timer); p.reject(new Error('Verbindung getrennt')); }
+        for (const list of this.pending.values()) for (const p of list) { clearTimeout(p.timer); p.reject(new AppError('connection_closed', 'Connection to the TV closed')); }
         this.pending.clear();
-        finish(new Error('Verbindung zum TV getrennt'));
+        finish(new AppError('connection_closed', 'Connection to the TV closed'));
       });
     });
     return this.connecting;
@@ -125,7 +126,7 @@ export class TvRemote extends EventEmitter {
         const list = this.pending.get(event) || [];
         const i = list.indexOf(p);
         if (i >= 0) list.splice(i, 1);
-        reject(new Error(`Keine Antwort vom TV (${event})`));
+        reject(new AppError('no_response', `No response from the TV (${event})`, { vars: { event } }));
       }, timeout);
       if (!this.pending.has(event)) this.pending.set(event, []);
       this.pending.get(event).push(p);

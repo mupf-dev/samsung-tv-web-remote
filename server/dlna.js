@@ -1,4 +1,6 @@
 // DLNA/UPnP (Port 9197): Lautstärke, Stummschaltung und Medienwiedergabe per URL
+import { AppError } from './errors.js';
+
 const RC = 'urn:schemas-upnp-org:service:RenderingControl:1';
 const AVT = 'urn:schemas-upnp-org:service:AVTransport:1';
 
@@ -20,7 +22,10 @@ export class Dlna {
       signal: AbortSignal.timeout(3000),
     });
     const text = await res.text();
-    if (!res.ok) throw new Error(`DLNA ${action} fehlgeschlagen: ${tag(text, 'errorDescription') || res.status}`);
+    if (!res.ok) {
+      const detail = tag(text, 'errorDescription') || res.status;
+      throw new AppError('dlna_failed', `DLNA ${action} failed: ${detail}`, { vars: { action, detail } });
+    }
     return text;
   }
 
@@ -56,7 +61,7 @@ export class Dlna {
     if (action === 'play') return this.#avt('Play', { Speed: 1 });
     if (action === 'pause') return this.#avt('Pause');
     if (action === 'stop') return this.#avt('Stop');
-    throw new Error(`Unbekannte Aktion: ${action}`);
+    throw new AppError('unknown_action', `Unknown action: ${action}`, { status: 400, vars: { action } });
   }
 
   async transportInfo() {

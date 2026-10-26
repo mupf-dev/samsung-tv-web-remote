@@ -1,3 +1,5 @@
+import { initI18n, t, has, languages, language, setLanguage } from './i18n/i18n.js';
+
 const $ = (sel, el = document) => el.querySelector(sel);
 const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
 
@@ -19,7 +21,11 @@ async function api(path, body, { silent = false } = {}) {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || res.statusText);
+    if (!res.ok) {
+      // the server sends a stable error code; translate it, otherwise show the original message
+      const code = data.code && `errors.${data.code}`;
+      throw new Error(code && has(code) ? t(code, data.vars) : data.error || res.statusText);
+    }
     return data;
   } catch (err) {
     if (!silent) toast(err.message, true);
@@ -29,7 +35,7 @@ async function api(path, body, { silent = false } = {}) {
 
 const key = (k, cmd) => api('/api/key', { key: k, cmd }).catch(() => {});
 
-// ---------- Tasten mit Wiederholung beim Gedrückthalten ----------
+// ---------- Keys, repeating while held ----------
 document.addEventListener('pointerdown', (e) => {
   const btn = e.target.closest('[data-key]');
   if (!btn || e.button > 0) return;
@@ -43,7 +49,7 @@ document.addEventListener('pointerdown', (e) => {
   window.addEventListener('pointerup', stop);
   window.addEventListener('pointercancel', stop);
 });
-// Tastatur-Bedienung der Buttons (Enter/Leertaste auf fokussiertem Button)
+// keyboard activation of buttons (Enter/Space on a focused button)
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-key]');
   if (btn && e.detail === 0) key(btn.dataset.key);
@@ -60,9 +66,8 @@ function showTab(name) {
 $$('.tabs button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
 // ---------- Status (Server-Sent Events) ----------
-const powerText = { on: 'Eingeschaltet', standby: 'Standby', off: 'Nicht erreichbar', unknown: '–' };
-const remoteText = { connected: 'Verbunden', connecting: 'Verbinde …', pairing: 'Warte auf Freigabe', denied: 'Abgelehnt', disconnected: 'Getrennt' };
 let volDragging = false;
+let serverLost = false;
 
 function setChip(el, cls, text) {
   el.className = `chip ${cls}`;
@@ -72,22 +77,24 @@ function setChip(el, cls, text) {
 function render(s) {
   const prev = state;
   state = s;
+  serverLost = false;
   if (s.device) {
     $('#tv-name').textContent = s.device.name;
     $('#tv-model').textContent = `${s.device.model} · ${s.device.ip}`;
   }
-  setChip($('#chip-power'), s.power === 'on' ? 'ok' : s.power === 'standby' ? 'warn' : 'bad', powerText[s.power] || s.power);
+  setChip($('#chip-power'), s.power === 'on' ? 'ok' : s.power === 'standby' ? 'warn' : 'bad', t(`status.power.${s.power}`));
   const remoteState = s.power === 'on' ? s.remote : 'disconnected';
-  setChip($('#chip-remote'), remoteState === 'connected' ? 'ok' : remoteState === 'denied' ? 'bad' : remoteState === 'disconnected' ? '' : 'warn', `Steuerung: ${remoteText[remoteState]}`);
+  setChip($('#chip-remote'), remoteState === 'connected' ? 'ok' : remoteState === 'denied' ? 'bad' : remoteState === 'disconnected' ? '' : 'warn',
+    t('status.control', { state: t(`status.remote.${remoteState}`) }));
   $('#power-btn').classList.toggle('on', s.power === 'on');
 
   const banner = $('#banner');
   if (s.power === 'on' && s.remote === 'pairing') {
     banner.hidden = false;
-    banner.textContent = 'Bitte am Fernseher die Verbindungsanfrage von „TV Web Remote“ mit „Zulassen“ bestätigen.';
+    banner.textContent = t('banner.pairing');
   } else if (s.power === 'on' && s.remote === 'denied') {
     banner.hidden = false;
-    banner.textContent = 'Der Fernseher hat die Verbindung abgelehnt. Erlauben unter Einstellungen › Allgemein › Externe Geräteverwaltung › Geräteverbindungs-Manager › Geräteliste, dann unter „Info“ neu verbinden.';
+    banner.textContent = t('banner.denied');
   } else {
     banner.hidden = true;
   }
@@ -96,11 +103,9 @@ function render(s) {
   const mute = $('#mute-btn');
   mute.classList.toggle('active', Boolean(s.mute));
   $('use', mute).setAttribute('href', s.mute ? '#i-mute' : '#i-vol');
-  $('span', mute).textContent = s.mute ? 'Stumm' : 'Ton an';
+  $('span', mute).textContent = t(s.mute ? 'mute.on' : 'mute.off');
 
-  $('#ime-hint').textContent = s.ime
-    ? 'Die Tastatur am TV ist geöffnet – Text eingeben und senden.'
-    : 'Öffne am TV ein Suchfeld oder eine Tastatur – dann hier tippen und senden.';
+  $('#ime-hint').textContent = t(s.ime ? 'input.hintActive' : 'input.hintIdle');
   $('#ime-hint').classList.toggle('muted', !s.ime);
 
   if (s.remote === 'connected' && prev.remote !== 'connected' && !appsLoaded) loadApps();
@@ -118,15 +123,16 @@ function connectEvents() {
   const es = new EventSource('/api/events');
   es.onmessage = (e) => render(JSON.parse(e.data));
   es.onerror = () => {
-    setChip($('#chip-power'), 'bad', 'Server getrennt');
+    serverLost = true;
+    setChip($('#chip-power'), 'bad', t('status.serverLost'));
   };
 }
 
-// ---------- Ein/Aus, Lautstärke ----------
+// ---------- Power, volume ----------
 async function togglePower() {
   const action = state.power === 'on' ? 'off' : 'on';
   const r = await api('/api/power', { action }).catch(() => null);
-  if (r) toast(action === 'off' ? 'Wird ausgeschaltet …' : r.via === 'wol' ? 'Einschaltsignal gesendet (Wake-on-LAN) …' : 'Wird eingeschaltet …');
+  if (r) toast(t(action === 'off' ? 'power.turningOff' : r.via === 'wol' ? 'power.wolSent' : 'power.turningOn'));
 }
 $('#power-btn').addEventListener('click', togglePower);
 
@@ -152,16 +158,23 @@ const BRANDS = {
 const brand = (name) => Object.entries(BRANDS).find(([k]) => name.startsWith(k))?.[1];
 const hue = (s) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
 
+function showGridMessage(text) {
+  const p = document.createElement('p');
+  p.className = 'muted';
+  p.textContent = text;
+  $('#app-grid').replaceChildren(p);
+}
+
 async function loadApps(refresh = false) {
   const grid = $('#app-grid');
-  if (!apps.length) grid.innerHTML = '<p class="muted">Apps werden geladen …</p>';
+  if (!apps.length) showGridMessage(t('apps.loading'));
   try {
     apps = await api(`/api/apps${refresh ? '?refresh=1' : ''}`, undefined, { silent: true });
     appsLoaded = true;
     renderApps();
     loadRunning();
   } catch (err) {
-    grid.innerHTML = `<p class="muted">Apps nicht verfügbar: ${err.message}</p>`;
+    showGridMessage(t('apps.unavailable', { error: err.message }));
   }
 }
 
@@ -173,12 +186,13 @@ function renderApps() {
     const el = document.createElement('button');
     el.className = 'app';
     el.dataset.id = app.id;
-    el.title = `${app.name} starten`;
+    el.title = t('apps.launch', { name: app.name });
     el.innerHTML = `<span class="dot" hidden></span>
-      <span class="close" role="button" title="App schließen"><svg><use href="#i-exit"/></svg></span>
+      <span class="close" role="button"><svg><use href="#i-exit"/></svg></span>
       <span class="app-icon"></span>
       <span class="app-name"></span>`;
     $('.app-name', el).textContent = app.name;
+    $('.close', el).title = t('apps.close');
     const b = brand(app.name);
     const icon = $('.app-icon', el);
     icon.style.setProperty('--h', hue(app.name));
@@ -195,16 +209,16 @@ function renderApps() {
     el.addEventListener('click', async (e) => {
       if (e.target.closest('.close')) {
         await api('/api/apps/close', { id: app.id }).catch(() => {});
-        toast(`${app.name} geschlossen`);
+        toast(t('apps.closed', { name: app.name }));
         setTimeout(loadRunning, 800);
         return;
       }
-      await api('/api/apps/launch', { id: app.id }).then(() => toast(`${app.name} wird gestartet`)).catch(() => {});
+      await api('/api/apps/launch', { id: app.id }).then(() => toast(t('apps.starting', { name: app.name }))).catch(() => {});
       setTimeout(loadRunning, 2500);
     });
     grid.append(el);
   }
-  if (!grid.children.length) grid.innerHTML = '<p class="muted">Keine passende App.</p>';
+  if (!grid.children.length) showGridMessage(t('apps.none'));
 }
 
 async function loadRunning() {
@@ -221,7 +235,7 @@ $('#app-search').addEventListener('input', renderApps);
 $('#apps-refresh').addEventListener('click', () => loadApps(true));
 tabLoaders.apps = () => (appsLoaded ? loadRunning() : loadApps());
 
-// ---------- Sender ----------
+// ---------- Channels ----------
 $('#channel-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const num = $('#channel-input').value.replace(/\D/g, '');
@@ -232,15 +246,15 @@ $('#channel-form').addEventListener('submit', async (e) => {
     for (const d of num) await key(`KEY_${d}`);
     await key('KEY_ENTER');
   }
-  toast(`Sender ${num}`);
+  toast(t('channels.switched', { number: num }));
   $('#channel-input').value = '';
 });
 
-// ---------- Eingabe ----------
+// ---------- Input ----------
 async function sendText(submit) {
   const text = $('#text-input').value;
   if (!text) return;
-  await api('/api/text', { text, submit }).then(() => toast('Text gesendet')).catch(() => {});
+  await api('/api/text', { text, submit }).then(() => toast(t('input.textSent'))).catch(() => {});
   if (submit) $('#text-input').value = '';
 }
 $('#text-form').addEventListener('submit', (e) => { e.preventDefault(); sendText(true); });
@@ -248,7 +262,7 @@ $('#text-send').addEventListener('click', () => sendText(false));
 
 $('#browser-form').addEventListener('submit', (e) => {
   e.preventDefault();
-  api('/api/browser', { url: $('#browser-url').value }).then(() => toast('Browser wird geöffnet')).catch(() => {});
+  api('/api/browser', { url: $('#browser-url').value }).then(() => toast(t('input.browserOpening'))).catch(() => {});
 });
 
 (() => {
@@ -279,23 +293,28 @@ $('#browser-form').addEventListener('submit', (e) => {
   pad.addEventListener('pointercancel', () => { last = null; pad.classList.remove('active'); });
 })();
 
-// ---------- Medien ----------
+// ---------- Media ----------
 $('#cast-form').addEventListener('submit', (e) => {
   e.preventDefault();
   api('/api/cast', { url: $('#cast-url').value, title: $('#cast-title').value || undefined })
-    .then(() => { toast('Wiedergabe gestartet'); setTimeout(loadCastInfo, 1500); }).catch(() => {});
+    .then(() => { toast(t('media.started')); setTimeout(loadCastInfo, 1500); }).catch(() => {});
 });
 $$('[data-cast]').forEach((b) => b.addEventListener('click', () => {
   api('/api/cast/control', { action: b.dataset.cast }).then(() => setTimeout(loadCastInfo, 600)).catch(() => {});
 }));
-const transportText = { PLAYING: 'Wiedergabe', PAUSED_PLAYBACK: 'Pausiert', STOPPED: 'Gestoppt', TRANSITIONING: 'Lädt …', NO_MEDIA_PRESENT: 'Keine Medien' };
+let castInfo = null;
 async function loadCastInfo() {
-  const info = await api('/api/cast/info', undefined, { silent: true }).catch(() => null);
-  $('#cast-info').textContent = info ? `${transportText[info.state] || info.state || ''}${info.position && info.duration && info.duration !== '0:00:00' ? ` · ${info.position} / ${info.duration}` : ''}` : '';
+  castInfo = await api('/api/cast/info', undefined, { silent: true }).catch(() => null);
+  renderCastInfo();
+}
+function renderCastInfo() {
+  const info = castInfo;
+  const stateText = info?.state && has(`media.state.${info.state}`) ? t(`media.state.${info.state}`) : info?.state || '';
+  $('#cast-info').textContent = info ? `${stateText}${info.position && info.duration && info.duration !== '0:00:00' ? ` · ${info.position} / ${info.duration}` : ''}` : '';
 }
 tabLoaders.media = loadCastInfo;
 
-// ---------- SmartThings: Bild, Ton, Quellen ----------
+// ---------- SmartThings: picture, sound, inputs ----------
 let stState = null;
 function segments(container, modes, current, capability, command) {
   container.replaceChildren(...modes.map((m) => {
@@ -315,12 +334,12 @@ async function loadSmartThings() {
   if (!state.smartthings) return;
   const s = await api('/api/st/status', undefined, { silent: true }).catch((err) => ({ error: err.message }));
   stState = s;
-  if (s.error) { $('#st-off p').textContent = `SmartThings-Fehler: ${s.error}`; return; }
+  if (s.error) { $('#st-off-text').textContent = t('picture.stError', { error: s.error }); return; }
   $('#st-off').hidden = true;
   $('#st-on').hidden = false;
   segments($('#picture-modes'), s.pictureModes, s.pictureMode, 'custom.picturemode', 'setPictureMode');
   segments($('#sound-modes'), s.soundModes, s.soundMode, 'custom.soundmode', 'setSoundMode');
-  $('#st-channel').textContent = s.channel ? `Aktueller Sender: ${s.channel}${s.channelName ? ` – ${s.channelName}` : ''}` : '';
+  $('#st-channel').textContent = s.channel ? t('channels.current', { channel: `${s.channel}${s.channelName ? ` – ${s.channelName}` : ''}` }) : '';
   if (s.inputs?.length) {
     $('#st-inputs-wrap').hidden = false;
     $('#st-inputs').replaceChildren(...s.inputs.map((i) => {
@@ -329,7 +348,7 @@ async function loadSmartThings() {
       b.classList.toggle('active', i.id === s.input);
       b.innerHTML = '<strong></strong><span></span>';
       $('strong', b).textContent = i.name;
-      $('span', b).textContent = i.id === s.input ? 'aktiv' : i.id;
+      $('span', b).textContent = i.id === s.input ? t('sources.active') : i.id;
       b.addEventListener('click', async () => {
         await api('/api/st/command', { capability: i.cap, command: 'setInputSource', args: [i.id] }).catch(() => {});
         setTimeout(loadSmartThings, 1000);
@@ -342,31 +361,33 @@ tabLoaders.picture = loadSmartThings;
 tabLoaders.sources = loadSmartThings;
 tabLoaders.channels = loadSmartThings;
 
-// ---------- Alle Tasten ----------
+// ---------- All keys ----------
 const KEY_GROUPS = {
-  'Navigation': [['Hoch', 'KEY_UP'], ['Runter', 'KEY_DOWN'], ['Links', 'KEY_LEFT'], ['Rechts', 'KEY_RIGHT'], ['OK', 'KEY_ENTER'], ['Zurück', 'KEY_RETURN'], ['Exit', 'KEY_EXIT'], ['Home', 'KEY_HOME'], ['Menü', 'KEY_MENU'], ['Optionen', 'KEY_TOOLS'], ['Info', 'KEY_INFO']],
-  'Ton': [['Lauter', 'KEY_VOLUP'], ['Leiser', 'KEY_VOLDOWN'], ['Stumm', 'KEY_MUTE']],
-  'Fernsehen': [['Sender +', 'KEY_CHUP'], ['Sender −', 'KEY_CHDOWN'], ['Senderliste', 'KEY_CH_LIST'], ['Vorheriger', 'KEY_PRECH'], ['Guide', 'KEY_GUIDE'], ['Videotext', 'KEY_TTX_MIX'], ['Live-TV', 'KEY_TV'], ['Untertitel', 'KEY_CAPTION']],
-  'Quellen': [['Quelle', 'KEY_SOURCE'], ['HDMI 1', 'KEY_HDMI1'], ['HDMI 2', 'KEY_HDMI2'], ['HDMI 3', 'KEY_HDMI3'], ['HDMI 4', 'KEY_HDMI4'], ['HDMI (wechseln)', 'KEY_HDMI']],
-  'Wiedergabe': [['Play', 'KEY_PLAY'], ['Pause', 'KEY_PAUSE'], ['Stopp', 'KEY_STOP'], ['Zurückspulen', 'KEY_REWIND'], ['Vorspulen', 'KEY_FF'], ['Aufnahme', 'KEY_REC']],
-  'Farbtasten': [['Rot', 'KEY_RED'], ['Grün', 'KEY_GREEN'], ['Gelb', 'KEY_YELLOW'], ['Blau', 'KEY_CYAN']],
-  'Extras (modellabhängig)': [['Bildformat', 'KEY_PICTURE_SIZE'], ['Bildmodus', 'KEY_PMODE'], ['Bedienungshilfen', 'KEY_AD'], ['Multi View', 'KEY_MULTI_VIEW'], ['Ambient', 'KEY_AMBIENT'], ['Sleep', 'KEY_SLEEP'], ['3D', 'KEY_3D'], ['E-Manual', 'KEY_CONTENTS'], ['Ein/Aus', 'KEY_POWER']],
+  navigation: ['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_ENTER', 'KEY_RETURN', 'KEY_EXIT', 'KEY_HOME', 'KEY_MENU', 'KEY_TOOLS', 'KEY_INFO'],
+  sound: ['KEY_VOLUP', 'KEY_VOLDOWN', 'KEY_MUTE'],
+  tv: ['KEY_CHUP', 'KEY_CHDOWN', 'KEY_CH_LIST', 'KEY_PRECH', 'KEY_GUIDE', 'KEY_TTX_MIX', 'KEY_TV', 'KEY_CAPTION'],
+  sources: ['KEY_SOURCE', 'KEY_HDMI1', 'KEY_HDMI2', 'KEY_HDMI3', 'KEY_HDMI4', 'KEY_HDMI'],
+  playback: ['KEY_PLAY', 'KEY_PAUSE', 'KEY_STOP', 'KEY_REWIND', 'KEY_FF', 'KEY_REC'],
+  colors: ['KEY_RED', 'KEY_GREEN', 'KEY_YELLOW', 'KEY_CYAN'],
+  extras: ['KEY_PICTURE_SIZE', 'KEY_PMODE', 'KEY_AD', 'KEY_MULTI_VIEW', 'KEY_AMBIENT', 'KEY_SLEEP', 'KEY_3D', 'KEY_CONTENTS', 'KEY_POWER'],
 };
-$('#key-groups').replaceChildren(...Object.entries(KEY_GROUPS).map(([title, keys]) => {
-  const group = document.createElement('div');
-  group.className = 'key-group';
-  group.innerHTML = '<h3></h3><div class="key-grid"></div>';
-  $('h3', group).textContent = title;
-  $('.key-grid', group).replaceChildren(...keys.map(([label, code]) => {
-    const b = document.createElement('button');
-    b.dataset.key = code;
-    b.innerHTML = '<span></span><small></small>';
-    $('span', b).textContent = label;
-    $('small', b).textContent = code;
-    return b;
+function renderKeyGroups() {
+  $('#key-groups').replaceChildren(...Object.entries(KEY_GROUPS).map(([group, codes]) => {
+    const el = document.createElement('div');
+    el.className = 'key-group';
+    el.innerHTML = '<h3></h3><div class="key-grid"></div>';
+    $('h3', el).textContent = t(`keys.group.${group}`);
+    $('.key-grid', el).replaceChildren(...codes.map((code) => {
+      const b = document.createElement('button');
+      b.dataset.key = code;
+      b.innerHTML = '<span></span><small></small>';
+      $('span', b).textContent = t(`keys.${code}`);
+      $('small', b).textContent = code;
+      return b;
+    }));
+    return el;
   }));
-  return group;
-}));
+}
 $('#custom-key-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const code = $('#custom-key').value.trim().toUpperCase();
@@ -374,30 +395,32 @@ $('#custom-key-form').addEventListener('submit', (e) => {
 });
 
 // ---------- Info ----------
-const infoLabels = { name: 'Name', modelName: 'Modell', model: 'Plattform', resolution: 'Auflösung', ip: 'IP-Adresse', wifiMac: 'MAC', networkType: 'Netzwerk', OS: 'System', Language: 'Sprache', countryCode: 'Land', PowerState: 'Status', tokenStored: 'Gekoppelt' };
+const INFO_FIELDS = ['name', 'modelName', 'model', 'resolution', 'ip', 'wifiMac', 'networkType', 'OS', 'Language', 'countryCode', 'PowerState', 'tokenStored'];
 async function loadInfo() {
   const info = await api('/api/info', undefined, { silent: true }).catch(() => null);
   const list = $('#info-list');
-  if (!info) { list.innerHTML = '<dt>Status</dt><dd>Fernseher nicht erreichbar</dd>'; return; }
-  list.replaceChildren(...Object.entries(infoLabels).filter(([k]) => info[k] != null).flatMap(([k, label]) => {
+  const rows = info
+    ? INFO_FIELDS.filter((k) => info[k] != null).map((k) => [t(`info.field.${k}`), typeof info[k] === 'boolean' ? t(info[k] ? 'info.yes' : 'info.no') : info[k]])
+    : [[t('info.field.PowerState'), t('info.unreachable')]];
+  list.replaceChildren(...rows.flatMap(([label, value]) => {
     const dt = document.createElement('dt'); dt.textContent = label;
-    const dd = document.createElement('dd'); dd.textContent = typeof info[k] === 'boolean' ? (info[k] ? 'ja' : 'nein') : info[k];
+    const dd = document.createElement('dd'); dd.textContent = value;
     return [dt, dd];
   }));
 }
 tabLoaders.info = loadInfo;
 $('#reconnect').addEventListener('click', () => {
-  toast('Verbinde … ggf. am TV bestätigen');
-  api('/api/remote/reconnect', {}).then(() => toast('Verbunden')).catch(() => {});
+  toast(t('info.reconnecting'));
+  api('/api/remote/reconnect', {}).then(() => toast(t('info.connected'))).catch(() => {});
 });
 $('#forget').addEventListener('click', async () => {
-  if (!confirm('Kopplung zurücksetzen? Beim nächsten Verbinden fragt der Fernseher erneut nach Freigabe.')) return;
+  if (!confirm(t('info.forgetConfirm'))) return;
   await api('/api/remote/forget', {}).catch(() => {});
-  toast('Kopplung zurückgesetzt');
+  toast(t('info.forgotten'));
   loadInfo();
 });
 
-// ---------- Tastaturkürzel ----------
+// ---------- Keyboard shortcuts ----------
 const SHORTCUTS = {
   ArrowUp: 'KEY_UP', ArrowDown: 'KEY_DOWN', ArrowLeft: 'KEY_LEFT', ArrowRight: 'KEY_RIGHT', Enter: 'KEY_ENTER',
   Backspace: 'KEY_RETURN', Escape: 'KEY_EXIT', h: 'KEY_HOME', '+': 'KEY_VOLUP', '-': 'KEY_VOLDOWN', m: 'KEY_MUTE',
@@ -416,7 +439,27 @@ document.addEventListener('keydown', (e) => {
   key(code);
 });
 
+// ---------- Language ----------
+function renderLanguageParts() {
+  if (state.power) render(state);
+  if (serverLost) setChip($('#chip-power'), 'bad', t('status.serverLost'));
+  $$('[data-hdmi]').forEach((el) => {
+    el.textContent = t('arc' in el.dataset ? 'sources.hdmiArcSub' : 'sources.hdmiSub', { n: el.dataset.hdmi });
+  });
+  renderKeyGroups();
+  if (appsLoaded) renderApps(); else if (!$('#app-grid').children.length) showGridMessage(t('apps.loading'));
+  renderCastInfo();
+  if (stState && !stState.error) loadSmartThings();
+  if ($('[data-pane="info"]').classList.contains('active')) loadInfo();
+}
+
+const langSelect = $('#lang-select');
+langSelect.replaceChildren(...languages.map(({ code, name }) => new Option(name, code)));
+langSelect.addEventListener('change', () => setLanguage(langSelect.value));
+window.addEventListener('languagechange', () => { langSelect.value = language(); renderLanguageParts(); });
+
 // ---------- Start ----------
+await initI18n();
 connectEvents();
 let startTab = 'apps';
 try { startTab = localStorage.getItem('tab') || 'apps'; } catch {}

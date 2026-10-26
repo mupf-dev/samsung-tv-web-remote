@@ -1,4 +1,6 @@
 // Optional: SmartThings-Cloud für Bildmodus, Tonmodus, Quelle und Sender (nicht lokal steuerbar)
+import { AppError } from './errors.js';
+
 const API = 'https://api.smartthings.com/v1';
 
 export class SmartThings {
@@ -18,8 +20,8 @@ export class SmartThings {
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) {
-      const hint = res.status === 401 ? ' (Token ungültig oder abgelaufen)' : '';
-      throw new Error(`SmartThings ${res.status}${hint}`);
+      if (res.status === 401) throw new AppError('smartthings_unauthorized', 'SmartThings: token invalid or expired');
+      throw new AppError('smartthings_http', `SmartThings error ${res.status}`, { vars: { status: res.status } });
     }
     return res.json();
   }
@@ -29,7 +31,7 @@ export class SmartThings {
     const { items = [] } = await this.#call('/devices');
     const tv = items.find((d) => /tv/i.test(d.ocf?.ocfDeviceType || '') || /tv/i.test(d.deviceTypeName || ''))
       || items.find((d) => /QN900|TV/i.test(`${d.name} ${d.label}`));
-    if (!tv) throw new Error('Kein Fernseher in SmartThings gefunden');
+    if (!tv) throw new AppError('smartthings_no_tv', 'No TV found in SmartThings');
     this.deviceId = tv.deviceId;
     return this.deviceId;
   }

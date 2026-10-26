@@ -134,6 +134,7 @@
     <symbol id="play" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m10 9 5 3-5 3z"/></symbol>
     <symbol id="power" viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></symbol>
     <symbol id="phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+    <symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
     <symbol id="lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
   </defs>
 </svg>
@@ -178,6 +179,7 @@
       <div class="feature"><div class="ic"><svg class="i"><use href="#play"/></svg></div><h3>Play media</h3><p>Play video, audio or image URLs from your home network directly on the TV via DLNA.</p></div>
       <div class="feature"><div class="ic"><svg class="i"><use href="#power"/></svg></div><h3>Power on &amp; off</h3><p>Wake from standby via key press or Wake-on-LAN – including under WSL2.</p></div>
       <div class="feature"><div class="ic"><svg class="i"><use href="#phone"/></svg></div><h3>Works on any device</h3><p>Responsive from phone to large monitor, light and dark theme, keyboard shortcuts on desktop.</p></div>
+      <div class="feature"><div class="ic"><svg class="i"><use href="#globe"/></svg></div><h3>Multilingual</h3><p>English and German built in, switchable live. New languages are a single dictionary file.</p></div>
       <div class="feature"><div class="ic"><svg class="i"><use href="#lock"/></svg></div><h3>Local &amp; private</h3><p>No cloud, no account. Optional SmartThings integration for direct picture and sound modes.</p></div>
     </div>
   </div>
@@ -188,7 +190,7 @@
     <div class="section-head">
       <div class="kicker">Screenshots</div>
       <h2>A look at the interface</h2>
-      <p>Every function in clearly organized tabs – the remote always stays in view. The interface itself is currently in German.</p>
+      <p>Every function in clearly organized tabs – the remote always stays in view.</p>
     </div>
     <div class="gallery-tabs" role="tablist">
       <button role="tab" aria-selected="true" data-src="screenshots/desktop-dark.png" data-cap="Apps: launch installed apps; running apps can be closed right away.">Apps</button>
@@ -262,6 +264,7 @@ npm start</pre>
     <div class="notes">
       <div class="note"><strong>App list</strong>Newer firmware no longer reports the list of installed apps. Known app IDs are therefore checked one by one; you can add your own in <code>config.json</code>.</div>
       <div class="note"><strong>Picture settings</strong>The TV exposes no interface for brightness, contrast and the like – they remain reachable via the menu and the D-pad.</div>
+      <div class="note"><strong>Add a language</strong>Copy <code>public/i18n/locales/en.js</code>, translate the values, register it in <code>locales/index.js</code> and run <code>npm run i18n:check</code>.</div>
       <div class="note"><strong>Other models</strong>Built on a QN900A (2021). Other Samsung Tizen TVs from around 2018 onwards use the same interfaces and should work too – this has not been tested.</div>
     </div>
   </div>

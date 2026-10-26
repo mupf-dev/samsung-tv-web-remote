@@ -86,6 +86,17 @@ h3:first-child { margin-top: 4px; }
 .chip.ok i { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
 .chip.warn i { background: var(--warn); }
 .chip.bad i { background: var(--bad); }
+.lang {
+  position: relative; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px 0 12px;
+  border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--muted); cursor: pointer;
+}
+.lang:hover, .lang:focus-within { border-color: var(--accent); color: var(--text); }
+.lang svg { width: 17px; height: 17px; }
+.lang select {
+  appearance: none; -webkit-appearance: none; border: 0; background: none; padding: 0 2px; font-size: 14px;
+  color: var(--text); cursor: pointer; border-radius: 0;
+}
+.lang select:focus-visible { outline: none; }
 .power-btn {
   width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;
   background: var(--card); border: 1px solid var(--line); color: var(--bad); transition: 0.15s;
@@ -308,7 +319,9 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 @media (max-width: 640px) {
   .topbar { padding: 14px 16px 6px; gap: 10px; }
   .topbar { flex-wrap: wrap; }
-  .status { order: 3; width: 100%; justify-content: flex-start; }
+  .brand { flex: 1 1 calc(100% - 70px); }
+  .status { order: 3; flex: 1 1 auto; justify-content: flex-start; }
+  .lang { order: 4; height: 32px; padding: 0 8px 0 10px; }
   .chip { padding: 4px 10px; font-size: 12px; }
   .app-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
   .app-icon { width: 54px; height: 54px; font-size: 22px; }

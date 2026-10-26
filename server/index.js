@@ -7,6 +7,7 @@ import { Dlna } from './dlna.js';
 import { SmartThings } from './smartthings.js';
 import { wake } from './wol.js';
 import { APP_CATALOG } from './apps-catalog.js';
+import { AppError } from './errors.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const config = JSON.parse(fs.readFileSync(path.join(root, 'config.json'), 'utf8'));
@@ -130,7 +131,7 @@ const routes = {
   },
 
   'POST /api/key': async ({ body }) => {
-    if (!/^KEY_[A-Z0-9_]+$/.test(body.key || '')) throw Object.assign(new Error('Ungültiger Tastencode'), { code: 400 });
+    if (!/^KEY_[A-Z0-9_]+$/.test(body.key || '')) throw new AppError('invalid_key', 'Invalid key code', { status: 400 });
     await remote.sendKey(body.key, body.cmd || 'Click');
     if (/KEY_(VOL|MUTE)/.test(body.key)) setTimeout(poll, 400);
     return { ok: true };
@@ -224,7 +225,7 @@ const routes = {
   },
 
   'POST /api/st/command': async ({ body }) => {
-    if (!st.enabled) throw Object.assign(new Error('SmartThings ist nicht konfiguriert'), { code: 400 });
+    if (!st.enabled) throw new AppError('smartthings_disabled', 'SmartThings is not configured', { status: 400 });
     await st.command(body.capability, body.command, body.args || []);
     return { ok: true };
   },
@@ -269,7 +270,10 @@ const server = http.createServer(async (req, res) => {
       const body = req.method === 'POST' ? await readBody(req) : {};
       send(res, 200, await handler({ body, query: url.searchParams }));
     } catch (err) {
-      send(res, err.code === 400 ? 400 : 502, { error: err.message });
+      if (err instanceof AppError) return send(res, err.status, { error: err.message, code: err.code, vars: err.vars });
+      // Netzwerkfehler auf bekannte Codes abbilden
+      const code = err.name === 'TimeoutError' ? 'timeout' : err.message === 'fetch failed' ? 'tv_unreachable' : undefined;
+      send(res, 502, { error: err.message, code });
     }
     return;
   }
@@ -278,12 +282,12 @@ const server = http.createServer(async (req, res) => {
   const file = path.normalize(path.join(publicDir, url.pathname === '/' ? 'index.html' : url.pathname));
   if (!file.startsWith(publicDir)) { res.writeHead(403); return res.end(); }
   fs.readFile(file, (err, data) => {
-    if (err) { res.writeHead(404); return res.end('Nicht gefunden'); }
+    if (err) { res.writeHead(404); return res.end('Not found'); }
     res.writeHead(200, { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream' });
     res.end(data);
   });
 });
 
 server.listen(port, '::', () => {
-  console.log(`TV-Web-Interface läuft auf http://localhost:${port}  (TV: ${tvHost}, SmartThings: ${st.enabled ? 'an' : 'aus'})`);
+  console.log(`TV Web Remote running at http://localhost:${port}  (TV: ${tvHost}, SmartThings: ${st.enabled ? 'on' : 'off'})`);
 });

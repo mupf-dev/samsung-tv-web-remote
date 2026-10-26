@@ -2,6 +2,7 @@
 import dgram from 'node:dgram';
 import fs from 'node:fs';
 import { execFile } from 'node:child_process';
+import { AppError } from './errors.js';
 
 const isWsl = (() => {
   try { return /microsoft/i.test(fs.readFileSync('/proc/version', 'utf8')); } catch { return false; }
@@ -9,7 +10,7 @@ const isWsl = (() => {
 
 function magicPacket(mac) {
   const hex = mac.replace(/[^0-9a-f]/gi, '');
-  if (hex.length !== 12) throw new Error(`Ungültige MAC-Adresse: ${mac}`);
+  if (hex.length !== 12) throw new AppError('invalid_mac', `Invalid MAC address: ${mac}`, { status: 400, vars: { mac } });
   const macBuf = Buffer.from(hex, 'hex');
   return Buffer.concat([Buffer.alloc(6, 0xff), ...Array(16).fill(macBuf)]);
 }

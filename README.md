@@ -6,7 +6,7 @@ A clean web interface for Samsung Tizen TVs – remote control, apps, volume, te
 
 ![TV Web Remote – dark theme](docs/screenshots/desktop-dark.png)
 
-Built and tested with a Samsung GQ75QN900ATXZG (QN900A, Tizen, 2021). Other Samsung Tizen TVs from around 2018 onwards use the same interfaces and should work too, but this has not been tested. The interface itself is currently in German.
+Built and tested with a Samsung GQ75QN900ATXZG (QN900A, Tizen, 2021). Other Samsung Tizen TVs from around 2018 onwards use the same interfaces and should work too, but this has not been tested.
 
 ## Features
 
@@ -19,6 +19,7 @@ Built and tested with a Samsung GQ75QN900ATXZG (QN900A, Tizen, 2021). Other Sams
 - **All keys:** every key on its own, plus any custom `KEY_…` code
 - **Power:** on from standby via `KEY_POWER` or Wake-on-LAN (also from WSL2)
 - **Responsive:** phone to desktop, light and dark theme, keyboard shortcuts
+- **Multilingual:** English (default) and German, switchable live; new languages are a single file
 - **Optional SmartThings:** direct picture mode, sound mode, input and channel selection
 
 ## Quick start
@@ -60,6 +61,18 @@ On first start the TV asks once for permission – confirm with “Allow”. The
 | Volume, mute, media playback | DLNA/UPnP `http://TV:9197` |
 | Power on from standby | `KEY_POWER`, otherwise Wake-on-LAN (under WSL also sent via Windows) |
 | Picture mode, sound mode, inputs, direct channel | optional SmartThings API |
+
+## Languages
+
+The interface ships in English and German. The language follows the browser setting and can be switched in the header; the choice is remembered. English is the fallback for any missing text.
+
+To add a language, e.g. French:
+
+1. Copy `public/i18n/locales/en.js` to `public/i18n/locales/fr.js` and translate the values. Keep the keys and `{placeholders}` unchanged.
+2. Register it in `public/i18n/locales/index.js`: `{ code: 'fr', name: 'Français' }`.
+3. Run `npm run i18n:check` – it reports missing or unknown keys and mismatched placeholders.
+
+In the HTML, texts are bound with `data-i18n`, `data-i18n-placeholder`, `data-i18n-title`, `data-i18n-aria-label` or `data-i18n-html`; in JavaScript with `t('key', { vars })`. Server errors carry a stable `code` that the interface translates via `errors.<code>`.
 
 ## Limitations
 
